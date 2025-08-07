@@ -45,4 +45,34 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+      public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    // public function permissions()
+    // {
+    //     return $this->belongsToMany(Permission::class, 'permission_role')
+    //         ->whereIn('permission_id', function ($query) {
+    //             $query->select('permission_id')
+    //                 ->from('permission_role')
+    //                 ->whereIn('role_id', $this->roles->pluck('id'));
+    //         });
+    // }
+ public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'permission_role', 'role_id', 'permission_id')
+            ->whereIn('permission_role.role_id', $this->roles()->pluck('roles.id'));
+    }
+
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class)->withPivot('role');
+    }
+
+    public function hasPermission($permission)
+    {
+        return $this->permissions()->where('name', $permission)->exists();
+    }
 }
