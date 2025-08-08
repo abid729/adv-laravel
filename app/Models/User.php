@@ -6,12 +6,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Scopes\ActiveUserScope;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new ActiveUserScope);
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +26,10 @@ class User extends Authenticatable
         'email',
         'password',
     ];
+    public function scopeOfRole($query, string $role)
+    {
+        return $query->where('role', $role);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -46,21 +54,12 @@ class User extends Authenticatable
         ];
     }
 
-      public function roles()
+    public function roles()
     {
         return $this->belongsToMany(Role::class);
     }
 
-    // public function permissions()
-    // {
-    //     return $this->belongsToMany(Permission::class, 'permission_role')
-    //         ->whereIn('permission_id', function ($query) {
-    //             $query->select('permission_id')
-    //                 ->from('permission_role')
-    //                 ->whereIn('role_id', $this->roles->pluck('id'));
-    //         });
-    // }
- public function permissions()
+    public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'permission_role', 'role_id', 'permission_id')
             ->whereIn('permission_role.role_id', $this->roles()->pluck('roles.id'));
